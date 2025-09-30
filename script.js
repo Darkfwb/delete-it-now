@@ -257,6 +257,54 @@ function endMasterRanked() {
   setHTML("masterRankedResult", `<b>Your Master Ranked score:</b> ${masterRankedScore} points`);
 }
 
+// --------- QUIZ PROGRESS SAVE/RESUME LOGIC ---------
+function saveQuizProgress() {
+  const progress = {
+    userName,
+    userGrade,
+    score,
+    total,
+    currentTestQuestions,
+    currentQuestionIndex
+  };
+  localStorage.setItem("quizProgress", JSON.stringify(progress));
+}
+
+function loadQuizProgress() {
+  try {
+    const progress = JSON.parse(localStorage.getItem("quizProgress"));
+    if (!progress || progress.currentQuestionIndex >= QUIZ_QUESTIONS_COUNT) return false;
+
+    userName = progress.userName;
+    userGrade = progress.userGrade;
+    score = progress.score;
+    total = progress.total;
+    currentTestQuestions = progress.currentTestQuestions;
+    currentQuestionIndex = progress.currentQuestionIndex;
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+function clearQuizProgress() {
+  localStorage.removeItem("quizProgress");
+}
+
+function showResumeQuizPrompt() {
+  if (confirm("You have an unfinished test. Would you like to continue it?")) {
+    if (loadQuizProgress()) {
+      hideSections();
+      showSection("quizSection");
+      nextQuestion();
+    }
+  } else {
+    clearQuizProgress();
+  }
+}
+
+// --------- END QUIZ PROGRESS LOGIC ---------
+
 function startQuiz() {
   userName = getValue("name").trim();
   userGrade = parseInt(getValue("grade"), 10);
@@ -279,6 +327,7 @@ function startQuiz() {
 
   hideSections();
   showSection("quizSection");
+  saveQuizProgress();  // ADDED: Save progress when quiz starts
   nextQuestion();
 }
 
@@ -305,6 +354,7 @@ function submitAnswer() {
   }
   setText("score", `Score: ${score}/${total}`);
   currentQuestionIndex++;
+  saveQuizProgress();  // ADDED: Save progress after answering
   setTimeout(nextQuestion, 1000);
 }
 
@@ -312,6 +362,7 @@ function endQuiz() {
   hideSections();
   showSection("startForm");
   saveScore();
+  clearQuizProgress();  // ADDED: Clear quiz progress when finished
   displayScores();
   setHTML("feedback", `Test finished! Your score: ${score}/${QUIZ_QUESTIONS_COUNT}`);
 }
@@ -436,4 +487,13 @@ window.onload = function() {
   displayScores();
   updateMasterRankedButton();
   addListeners();
+
+  // to resume unfinished quiz
+  const quizProgress = localStorage.getItem("quizProgress");
+  if (quizProgress) {
+    const progress = JSON.parse(quizProgress);
+    if (progress && progress.currentQuestionIndex < QUIZ_QUESTIONS_COUNT) {
+      showResumeQuizPrompt();
+    }
+  }
 };
