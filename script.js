@@ -1,11 +1,16 @@
+const QUIZ_QUESTIONS_COUNT = 10;
+const QUICK_QUIZ_GRADES = 12;
+const RANKED_UNLOCK_POINTS = 200;
+const RANKED_POINT_VALUE = 15;
+const MASTER_QUESTIONS_COUNT = 20;
+
 let userName = "";
 let userGrade = 1;
-let questionsPool = [];
-let currentQuestion = {};
 let score = 0;
 let total = 0;
 let currentTestQuestions = [];
 let currentQuestionIndex = 0;
+let currentQuestion = {};
 
 let quickQuizQuestions = [];
 let quickQuizIndex = 0;
@@ -16,7 +21,13 @@ let rankedIndex = 0;
 let rankedScore = 0;
 let rankedActive = false;
 
-// Генерация 100 вопросов для каждого класса
+let rankedTotalPoints = 0;
+
+let masterRankedQuestions = [];
+let masterRankedIndex = 0;
+let masterRankedScore = 0;
+let masterRankedActive = false;
+
 function generateQuestionsForGrade(grade) {
   const questions = [];
   for (let i = 0; i < 50; i++) {
@@ -41,22 +52,23 @@ function generateQuestionsForGrade(grade) {
   }
   return questions.slice(0, 100);
 }
+
 const questionsByGrade = {};
 for (let g = 1; g <= 12; g++) {
   questionsByGrade[g] = generateQuestionsForGrade(g);
 }
+
 function startQuickQuiz() {
   quickQuizQuestions = [];
-  for (let g = 1; g <= 12; g++) {
+  for (let g = 1; g <= QUICK_QUIZ_GRADES; g++) {
     const arr = shuffleArray(questionsByGrade[g]);
-    quickQuizQuestions.push(arr[0]);
+    if (arr.length > 0) quickQuizQuestions.push(arr[0]);
   }
   quickQuizIndex = 0;
   quickQuizScore = 0;
-  document.getElementById("startForm").style.display = "none";
-  document.getElementById("quizSection").style.display = "none";
-  document.getElementById("quickQuizSection").style.display = "flex";
-  document.getElementById("quickQuizResult").innerText = "";
+  hideSections();
+  showSection("quickQuizSection");
+  setText("quickQuizResult", "");
   nextQuickQuizQuestion();
 }
 
@@ -66,34 +78,30 @@ function nextQuickQuizQuestion() {
     return;
   }
   const q = quickQuizQuestions[quickQuizIndex];
-  document.getElementById("quickQuestion").innerText = `Grade ${quickQuizIndex + 1}: ${q.q}`;
-  document.getElementById("quickAnswer").value = "";
-  document.getElementById("quickFeedback").innerText = "";
-  document.getElementById("quickScore").innerText = `Score: ${quickQuizScore}/${quickQuizIndex}`;
+  setText("quickQuestion", `Grade ${quickQuizIndex + 1}: ${q.q}`);
+  setValue("quickAnswer", "");
+  setText("quickFeedback", "");
+  setText("quickScore", `Score: ${quickQuizScore}/${quickQuizIndex}`);
 }
 
 function submitQuickAnswer() {
-  const userAnswer = document.getElementById("quickAnswer").value.trim();
+  const userAnswer = getValue("quickAnswer").trim();
   const q = quickQuizQuestions[quickQuizIndex];
   if (userAnswer.toLowerCase() === q.a.toLowerCase()) {
     quickQuizScore++;
-    document.getElementById("quickFeedback").innerText = "Correct!";
-    document.getElementById("quickFeedback").style.color = "green";
+    setFeedback("quickFeedback", "Correct!", "green");
   } else {
-    document.getElementById("quickFeedback").innerText = `Wrong! Correct answer: ${q.a}`;
-    document.getElementById("quickFeedback").style.color = "red";
+    setFeedback("quickFeedback", `Wrong! Correct answer: ${q.a}`, "red");
   }
-  document.getElementById("quickScore").innerText = `Score: ${quickQuizScore}/${quickQuizIndex + 1}`;
+  setText("quickScore", `Score: ${quickQuizScore}/${quickQuizIndex + 1}`);
   quickQuizIndex++;
   setTimeout(nextQuickQuizQuestion, 1000);
 }
 
 function endQuickQuiz() {
-  document.getElementById("quickQuizSection").style.display = "none";
-  document.getElementById("startForm").style.display = "flex";
-  let estimatedGrade = quickQuizScore;
-  document.getElementById("quickQuizResult").innerHTML =
-    `<b>Estimated grade:</b> ${estimatedGrade} <br>Your score: ${quickQuizScore}/12`;
+  hideSections();
+  showSection("startForm");
+  setHTML("quickQuizResult", `<b>Estimated grade:</b> ${quickQuizScore} <br>Your score: ${quickQuizScore}/${QUICK_QUIZ_GRADES}`);
 }
 
 function startRanked() {
@@ -105,11 +113,9 @@ function startRanked() {
   rankedIndex = 0;
   rankedScore = 0;
   rankedActive = true;
-  document.getElementById("startForm").style.display = "none";
-  document.getElementById("quizSection").style.display = "none";
-  document.getElementById("quickQuizSection").style.display = "none";
-  document.getElementById("rankedSection").style.display = "flex";
-  document.getElementById("rankedResult").innerText = "";
+  hideSections();
+  showSection("rankedSection");
+  setText("rankedResult", "");
   nextRankedQuestion();
 }
 
@@ -119,152 +125,45 @@ function nextRankedQuestion() {
     return;
   }
   const q = rankedQuestions[rankedIndex];
-  document.getElementById("rankedQuestion").innerText = q.q;
-  document.getElementById("rankedAnswer").value = "";
-  document.getElementById("rankedFeedback").innerText = "";
-  document.getElementById("rankedScore").innerText = `Ranked Points: ${rankedScore}`;
+  setText("rankedQuestion", q.q);
+  setValue("rankedAnswer", "");
+  setText("rankedFeedback", "");
+  setText("rankedScore", `Ranked Points: ${rankedScore}`);
 }
 
 function submitRankedAnswer() {
-  const userAnswer = document.getElementById("rankedAnswer").value.trim();
+  const userAnswer = getValue("rankedAnswer").trim();
   const q = rankedQuestions[rankedIndex];
   if (userAnswer.toLowerCase() === q.a.toLowerCase()) {
-    rankedScore += 15;
-    document.getElementById("rankedFeedback").innerText = "Correct! +15 points";
-    document.getElementById("rankedFeedback").style.color = "green";
+    rankedScore += RANKED_POINT_VALUE;
+    setFeedback("rankedFeedback", `Correct! +${RANKED_POINT_VALUE} points`, "green");
     rankedIndex++;
     setTimeout(nextRankedQuestion, 800);
   } else {
-    document.getElementById("rankedFeedback").innerText = `Wrong! Correct answer: ${q.a}`;
-    document.getElementById("rankedFeedback").style.color = "red";
+    setFeedback("rankedFeedback", `Wrong! Correct answer: ${q.a}`, "red");
     rankedActive = false;
     setTimeout(endRanked, 1200);
   }
 }
 
 function endRanked() {
-  document.getElementById("rankedSection").style.display = "none";
-  document.getElementById("startForm").style.display = "flex";
-  document.getElementById("rankedResult").innerHTML =
-    `<b>Your ranked score:</b> ${rankedScore} points`;
+  hideSections();
+  showSection("startForm");
+  rankedTotalPoints = getRankedPoints() + rankedScore;
+  saveRankedPoints(rankedTotalPoints);
+  setHTML("rankedResult", `<b>Your ranked score:</b> ${rankedScore} points<br>Total: ${rankedTotalPoints}`);
+  updateMasterRankedButton();
 }
 
-function startQuiz() {
-  userName = document.getElementById("name").value.trim();
-  userGrade = parseInt(document.getElementById("grade").value, 10);
-
-  if (!userName || isNaN(userGrade)) {
-    alert("Please enter your name and select grade!");
-    return;
-  }
-
-  score = 0;
-  total = 0;
-  currentQuestionIndex = 0;
-
-  questionsPool = questionsByGrade[userGrade] || [];
-  if (questionsPool.length < 10) {
-    alert("Not enough questions for this grade.");
-    return;
-  }
-  currentTestQuestions = shuffleArray(questionsPool).slice(0, 10);
-
-  document.getElementById("startForm").style.display = "none";
-  document.getElementById("quizSection").style.display = "flex";
-  document.getElementById("quickQuizSection").style.display = "none";
-  document.getElementById("rankedSection").style.display = "none";
-  nextQuestion();
-}
-
-function nextQuestion() {
-  if (currentQuestionIndex >= currentTestQuestions.length) {
-    endQuiz();
-    return;
-  }
-  currentQuestion = currentTestQuestions[currentQuestionIndex];
-  document.getElementById("question").innerText = currentQuestion.q;
-  document.getElementById("answer").value = "";
-  document.getElementById("feedback").innerText = "";
-  document.getElementById("score").innerText = `Score: ${score}/${total}`;
-}
-
-function submitAnswer() {
-  const userAnswer = document.getElementById("answer").value.trim();
-  total++;
-  if (userAnswer.toLowerCase() === currentQuestion.a.toLowerCase()) {
-    score++;
-    document.getElementById("feedback").innerText = "Correct!";
-    document.getElementById("feedback").style.color = "green";
-  } else {
-    document.getElementById("feedback").innerText = `Wrong! Correct answer: ${currentQuestion.a}`;
-    document.getElementById("feedback").style.color = "red";
-  }
-  document.getElementById("score").innerText = `Score: ${score}/${total}`;
-  currentQuestionIndex++;
-  setTimeout(nextQuestion, 1000);
-}
-
-function endQuiz() {
-  document.getElementById("quizSection").style.display = "none";
-  document.getElementById("startForm").style.display = "flex";
-  saveScore();
-  displayScores();
-  alert(`Test finished! Your score: ${score}/10`);
-}
-
-function shuffleArray(array) {
-  let arr = array.slice();
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr;
-}
-function saveScore() {
-  const scores = JSON.parse(localStorage.getItem("mathScores") || "[]");
-  scores.push({
-    name: userName,
-    grade: userGrade,
-    score: score,
-    total: total,
-    date: new Date().toLocaleString()
-  });
-  localStorage.setItem("mathScores", JSON.stringify(scores));
-}
-function displayScores() {
-  const scores = JSON.parse(localStorage.getItem("mathScores") || "[]");
-  const bar = document.getElementById("scoreBar");
-  bar.innerHTML = "<b>Your previous scores:</b><br>";
-  if (scores.length === 0) {
-    bar.innerHTML += "No scores yet.";
-    return;
-  }
-  scores.slice(-10).reverse().forEach(s => {
-    bar.innerHTML += `${s.date}: <b>${s.name}</b> (Grade ${s.grade}) — <span style="color:#1565c0">${s.score}/10</span><br>`;
-  });
-}
-window.onload = displayScores;
-
-let rankedTotalPoints = 0;
-
-let masterRankedQuestions = [];
-let masterRankedIndex = 0;
-let masterRankedScore = 0;
-let masterRankedActive = false;
-let masterRankedCurrentAnswer = "";
-
-// Генерация вопросов с вариантами для 11-12 классов
 function generateMasterQuestions() {
   const arr = [];
   for (let g = 11; g <= 12; g++) {
     for (let i = 0; i < 50; i++) {
-      let a = Math.floor(Math.random() * (10 + g * 2)) + 1;
-      let b = Math.floor(Math.random() * (10 + g * 2)) + 1;
       let correct, options;
       if (g === 11) {
         correct = `${g}x^${g - 1}`;
         options = [
-          `${g}x^${g - 1}`,
+          correct,
           `${g - 1}x^${g}`,
           `${g}x^${g}`,
           `${g - 1}x^${g - 1}`
@@ -277,7 +176,7 @@ function generateMasterQuestions() {
       } else {
         correct = `${g / 2}x^2 + C`;
         options = [
-          `${g / 2}x^2 + C`,
+          correct,
           `${g}x^2 + C`,
           `${g / 2}x + C`,
           `${g}x + C`
@@ -290,68 +189,13 @@ function generateMasterQuestions() {
       }
     }
   }
-  return arr.slice(0, 20); 
+  return shuffleArray(arr).slice(0, MASTER_QUESTIONS_COUNT);
 }
 
-function startRanked() {
-  rankedQuestions = [];
-  for (let g = 8; g <= 12; g++) {
-    rankedQuestions = rankedQuestions.concat(questionsByGrade[g]);
-  }
-  rankedQuestions = shuffleArray(rankedQuestions);
-  rankedIndex = 0;
-  rankedScore = 0;
-  rankedActive = true;
-  document.getElementById("startForm").style.display = "none";
-  document.getElementById("quizSection").style.display = "none";
-  document.getElementById("quickQuizSection").style.display = "none";
-  document.getElementById("rankedSection").style.display = "flex";
-  document.getElementById("rankedResult").innerText = "";
-  nextRankedQuestion();
-}
-
-function nextRankedQuestion() {
-  if (!rankedActive || rankedIndex >= rankedQuestions.length) {
-    endRanked();
-    return;
-  }
-  const q = rankedQuestions[rankedIndex];
-  document.getElementById("rankedQuestion").innerText = q.q;
-  document.getElementById("rankedAnswer").value = "";
-  document.getElementById("rankedFeedback").innerText = "";
-  document.getElementById("rankedScore").innerText = `Ranked Points: ${rankedScore}`;
-}
-
-function submitRankedAnswer() {
-  const userAnswer = document.getElementById("rankedAnswer").value.trim();
-  const q = rankedQuestions[rankedIndex];
-  if (userAnswer.toLowerCase() === q.a.toLowerCase()) {
-    rankedScore += 15;
-    document.getElementById("rankedFeedback").innerText = "Correct! +15 points";
-    document.getElementById("rankedFeedback").style.color = "green";
-    rankedIndex++;
-    setTimeout(nextRankedQuestion, 800);
-  } else {
-    document.getElementById("rankedFeedback").innerText = `Wrong! Correct answer: ${q.a}`;
-    document.getElementById("rankedFeedback").style.color = "red";
-    rankedActive = false;
-    setTimeout(endRanked, 1200);
-  }
-}
-
-function endRanked() {
-  document.getElementById("rankedSection").style.display = "none";
-  document.getElementById("startForm").style.display = "flex";
-  rankedTotalPoints = getRankedPoints() + rankedScore;
-  saveRankedPoints(rankedTotalPoints);
-  document.getElementById("rankedResult").innerHTML =
-    `<b>Your ranked score:</b> ${rankedScore} points<br>Total: ${rankedTotalPoints}`;
-  updateMasterRankedButton();
-}
 function tryStartMasterRanked() {
-  if (getRankedPoints() < 200) {
-    const need = 200 - getRankedPoints();
-    alert(`You need ${need} more points in Ranked to unlock Master Ranked!`);
+  const points = getRankedPoints();
+  if (points < RANKED_UNLOCK_POINTS) {
+    setText("masterRankedResult", `You need ${RANKED_UNLOCK_POINTS - points} more points in Ranked to unlock Master Ranked!`);
     return;
   }
   startMasterRanked();
@@ -362,9 +206,9 @@ function startMasterRanked() {
   masterRankedIndex = 0;
   masterRankedScore = 0;
   masterRankedActive = true;
-  document.getElementById("startForm").style.display = "none";
-  document.getElementById("masterRankedSection").style.display = "flex";
-  document.getElementById("masterRankedResult").innerText = "";
+  hideSections();
+  showSection("masterRankedSection");
+  setText("masterRankedResult", "");
   nextMasterRankedQuestion();
 }
 
@@ -374,14 +218,14 @@ function nextMasterRankedQuestion() {
     return;
   }
   const q = masterRankedQuestions[masterRankedIndex];
-  document.getElementById("masterRankedQuestion").innerText = q.q;
-  document.getElementById("masterRankedFeedback").innerText = "";
-  document.getElementById("masterRankedScore").innerText = `Master Ranked Points: ${masterRankedScore}`;
+  setText("masterRankedQuestion", q.q);
+  setText("masterRankedFeedback", "");
+  setText("masterRankedScore", `Master Ranked Points: ${masterRankedScore}`);
   let html = "";
   q.options.forEach((opt, idx) => {
     html += `<label><input type="radio" name="masterOption" value="${opt}"> ${String.fromCharCode(97 + idx)}) ${opt}</label><br>`;
   });
-  document.getElementById("masterRankedOptions").innerHTML = html;
+  setHTML("masterRankedOptions", html);
 }
 
 function submitMasterRankedAnswer() {
@@ -391,32 +235,130 @@ function submitMasterRankedAnswer() {
     if (r.checked) selected = r.value;
   }
   if (!selected) {
-    alert("Please select an answer!");
+    setFeedback("masterRankedFeedback", "Please select an answer!", "orange");
     return;
   }
   const q = masterRankedQuestions[masterRankedIndex];
   if (selected === q.a) {
-    masterRankedScore += 15;
-    document.getElementById("masterRankedFeedback").innerText = "Correct! +15 points";
-    document.getElementById("masterRankedFeedback").style.color = "green";
+    masterRankedScore += RANKED_POINT_VALUE;
+    setFeedback("masterRankedFeedback", `Correct! +${RANKED_POINT_VALUE} points`, "green");
     masterRankedIndex++;
     setTimeout(nextMasterRankedQuestion, 800);
   } else {
-    document.getElementById("masterRankedFeedback").innerText = `Wrong! Correct answer: ${q.a}`;
-    document.getElementById("masterRankedFeedback").style.color = "red";
+    setFeedback("masterRankedFeedback", `Wrong! Correct answer: ${q.a}`, "red");
     masterRankedActive = false;
     setTimeout(endMasterRanked, 1200);
   }
 }
 
 function endMasterRanked() {
-  document.getElementById("masterRankedSection").style.display = "none";
-  document.getElementById("startForm").style.display = "flex";
-  document.getElementById("masterRankedResult").innerHTML =
-    `<b>Your Master Ranked score:</b> ${masterRankedScore} points`;
+  hideSections();
+  showSection("startForm");
+  setHTML("masterRankedResult", `<b>Your Master Ranked score:</b> ${masterRankedScore} points`);
 }
 
-//  Система очков Ranked 
+function startQuiz() {
+  userName = getValue("name").trim();
+  userGrade = parseInt(getValue("grade"), 10);
+
+  if (!userName || isNaN(userGrade)) {
+    setFeedback("feedback", "Please enter your name and select grade!", "orange");
+    return;
+  }
+
+  score = 0;
+  total = 0;
+  currentQuestionIndex = 0;
+
+  const pool = questionsByGrade[userGrade] || [];
+  if (pool.length < QUIZ_QUESTIONS_COUNT) {
+    setFeedback("feedback", "Not enough questions for this grade.", "orange");
+    return;
+  }
+  currentTestQuestions = shuffleArray(pool).slice(0, QUIZ_QUESTIONS_COUNT);
+
+  hideSections();
+  showSection("quizSection");
+  nextQuestion();
+}
+
+function nextQuestion() {
+  if (currentQuestionIndex >= currentTestQuestions.length) {
+    endQuiz();
+    return;
+  }
+  currentQuestion = currentTestQuestions[currentQuestionIndex];
+  setText("question", currentQuestion.q);
+  setValue("answer", "");
+  setText("feedback", "");
+  setText("score", `Score: ${score}/${total}`);
+}
+
+function submitAnswer() {
+  const userAnswer = getValue("answer").trim();
+  total++;
+  if (userAnswer.toLowerCase() === currentQuestion.a.toLowerCase()) {
+    score++;
+    setFeedback("feedback", "Correct!", "green");
+  } else {
+    setFeedback("feedback", `Wrong! Correct answer: ${currentQuestion.a}`, "red");
+  }
+  setText("score", `Score: ${score}/${total}`);
+  currentQuestionIndex++;
+  setTimeout(nextQuestion, 1000);
+}
+
+function endQuiz() {
+  hideSections();
+  showSection("startForm");
+  saveScore();
+  displayScores();
+  setHTML("feedback", `Test finished! Your score: ${score}/${QUIZ_QUESTIONS_COUNT}`);
+}
+
+function shuffleArray(array) {
+  let arr = array.slice();
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function saveScore() {
+  try {
+    const scores = JSON.parse(localStorage.getItem("mathScores") || "[]");
+    scores.push({
+      name: userName,
+      grade: userGrade,
+      score: score,
+      total: total,
+      date: new Date().toLocaleString()
+    });
+    localStorage.setItem("mathScores", JSON.stringify(scores));
+  } catch (e) {
+    setFeedback("scoreBar", "Could not save score (localStorage error)", "red");
+  }
+}
+
+function displayScores() {
+  let scores = [];
+  try {
+    scores = JSON.parse(localStorage.getItem("mathScores") || "[]");
+  } catch (e) { scores = []; }
+  const bar = document.getElementById("scoreBar");
+  if (bar) {
+    bar.innerHTML = "<b>Your previous scores:</b><br>";
+    if (scores.length === 0) {
+      bar.innerHTML += "No scores yet.";
+      return;
+    }
+    scores.slice(-10).reverse().forEach(s => {
+      bar.innerHTML += `${s.date}: <b>${s.name}</b> (Grade ${s.grade}) — <span style="color:#1565c0">${s.score}/${QUIZ_QUESTIONS_COUNT}</span><br>`;
+    });
+  }
+}
+
 function getRankedPoints() {
   return parseInt(localStorage.getItem("rankedTotalPoints") || "0", 10);
 }
@@ -426,41 +368,72 @@ function saveRankedPoints(points) {
 function updateMasterRankedButton() {
   const btn = document.getElementById("masterRankedBtn");
   const lock = document.getElementById("masterLock");
-  if (getRankedPoints() < 200) {
-    btn.disabled = false;
-    btn.style.background = "#ccc";
-    btn.style.color = "#888";
-    lock.innerText = "🔒";
-  } else {
-    btn.disabled = false;
-    btn.style.background = "#1976d2";
-    btn.style.color = "#fff";
-    lock.innerText = "";
+  const points = getRankedPoints();
+  if (btn && lock) {
+    if (points < RANKED_UNLOCK_POINTS) {
+      btn.disabled = true;
+      btn.style.background = "#ccc";
+      btn.style.color = "#888";
+      lock.innerText = "🔒";
+    } else {
+      btn.disabled = false;
+      btn.style.background = "#1976d2";
+      btn.style.color = "#fff";
+      lock.innerText = "";
+    }
   }
 }
+
+function setText(id, text) {
+  const el = document.getElementById(id);
+  if (el) el.innerText = text;
+}
+function setHTML(id, html) {
+  const el = document.getElementById(id);
+  if (el) el.innerHTML = html;
+}
+function setValue(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.value = value;
+}
+function getValue(id) {
+  const el = document.getElementById(id);
+  return el ? el.value : "";
+}
+function setFeedback(id, msg, color) {
+  const el = document.getElementById(id);
+  if (el) {
+    el.innerText = msg;
+    el.style.color = color;
+  }
+}
+function hideSections() {
+  ["startForm", "quizSection", "quickQuizSection", "rankedSection", "masterRankedSection"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = "none";
+  });
+}
+function showSection(id) {
+  const el = document.getElementById(id);
+  if (el) el.style.display = "flex";
+}
+
+function addListeners() {
+  const answerEl = document.getElementById("answer");
+  if (answerEl) answerEl.addEventListener("keydown", e => { if (e.key === "Enter") submitAnswer(); });
+
+  const quickAnswerEl = document.getElementById("quickAnswer");
+  if (quickAnswerEl) quickAnswerEl.addEventListener("keydown", e => { if (e.key === "Enter") submitQuickAnswer(); });
+
+  const rankedAnswerEl = document.getElementById("rankedAnswer");
+  if (rankedAnswerEl) rankedAnswerEl.addEventListener("keydown", e => { if (e.key === "Enter") submitRankedAnswer(); });
+
+  const masterSectionEl = document.getElementById("masterRankedSection");
+  if (masterSectionEl) masterSectionEl.addEventListener("keydown", e => { if (e.key === "Enter") submitMasterRankedAnswer(); });
+}
+
 window.onload = function() {
   displayScores();
   updateMasterRankedButton();
+  addListeners();
 };
-document.getElementById("answer").addEventListener("keydown", function(e) {
-  if (e.key === "Enter") {
-    submitAnswer();
-  }
-});
-document.getElementById("quickAnswer").addEventListener("keydown", function(e) {
-  if (e.key === "Enter") {
-    submitQuickAnswer();
-  }
-});
-
-document.getElementById("rankedAnswer").addEventListener("keydown", function(e) {
-  if (e.key === "Enter") {
-    submitRankedAnswer();
-  }
-});
-
-document.getElementById("masterRankedSection").addEventListener("keydown", function(e) {
-  if (e.key === "Enter") {
-    submitMasterRankedAnswer();
-  }
-});
