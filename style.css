@@ -1,5 +1,17 @@
+:root {
+  --primary: #1565c0;
+  --secondary: #1976d2;
+  --bg-light: #f4faff;
+  --bg-white: #fff;
+  --border: #b3c6e0;
+  --shadow: rgba(21,101,192,0.08);
+  --error: #d32f2f;
+  --success: #388e3c;
+}
+
+/* Basic styles and resets */
 body {
-  background: #f4faff;
+  background: var(--bg-light);
   color: #222;
   font-family: Arial, sans-serif;
   margin: 0;
@@ -16,20 +28,21 @@ header {
 }
 
 h1 {
-  margin: 0;
+  margin: 0 0 8px 0;
   font-size: 2rem;
-  color: #1565c0;
+  color: var(--primary);
 }
 
 main {
   max-width: 400px;
   margin: 0 auto;
-  background: #fff;
+  background: var(--bg-white);
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(21,101,192,0.08);
+  box-shadow: 0 2px 8px var(--shadow);
   padding: 32px;
 }
 
+/* Forms */
 form {
   display: flex;
   flex-direction: column;
@@ -40,22 +53,53 @@ form {
 input, select, button {
   padding: 10px;
   border-radius: 6px;
-  border: 1px solid #b3c6e0;
+  border: 1px solid var(--border);
   font-size: 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+input::placeholder {
+  color: #90a4ae;
+  opacity: 1;
+}
+
+input:focus, select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px #bbdefb;
+  outline: none;
+}
+
+input.error, select.error {
+  border-color: var(--error);
+}
+
+input.success, select.success {
+  border-color: var(--success);
 }
 
 button {
-  background: #1976d2;
+  background: var(--secondary);
   color: #fff;
   border: none;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.2s, box-shadow 0.2s;
+  font-weight: 600;
 }
 
-button:hover {
-  background: #1565c0;
+button:hover,
+button:focus {
+  background: var(--primary);
+  box-shadow: 0 2px 6px var(--shadow);
+  outline: none;
 }
 
+/* Accessibility: focus state for all interactive elements */
+input:focus, select:focus, button:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Quiz sections */
 #quizSection {
   display: flex;
   flex-direction: column;
@@ -70,13 +114,22 @@ button:hover {
 #feedback {
   margin-top: 8px;
   min-height: 24px;
+  transition: color 0.2s;
+}
+
+#feedback.error {
+  color: var(--error);
+}
+#feedback.success {
+  color: var(--success);
 }
 
 #score {
   margin-top: 8px;
   font-size: 1.1em;
-  color: #1565c0;
+  color: var(--primary);
 }
+
 .score-bar {
   background: #e3f2fd;
   border-radius: 8px;
@@ -90,4 +143,40 @@ button:hover {
   flex-direction: column;
   gap: 12px;
   margin-top: 16px;
+}
+
+/* Utility classes */
+.mt-16 { margin-top: 16px; }
+.mb-16 { margin-bottom: 16px; }
+.mt-32 { margin-top: 32px; }
+.mb-32 { margin-bottom: 32px; }
+
+/* Responsive styles */
+@media (max-width: 600px) {
+  main {
+    max-width: 100%;
+    padding: 16px;
+  }
+  header {
+    margin-top: 16px;
+    margin-bottom: 8px;
+  }
+  h1 {
+    font-size: 1.5rem;
+  }
+}
+
+/* Print styles */
+@media print {
+  body, main {
+    background: #fff !important;
+    color: #222 !important;
+    box-shadow: none !important;
+  }
+  button, input, select {
+    box-shadow: none !important;
+    color: #222 !important;
+    background: none !important;
+    border: 1px solid #ccc !important;
+  }
 }
