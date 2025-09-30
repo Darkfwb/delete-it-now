@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>MathCode</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>MathCode</h1>
+  </header>
+  <main>
+    <div id="scoreBar" class="score-bar"></div>
+    <form id="startForm" onsubmit="startQuiz(); return false;">
+      <input type="text" id="name" placeholder="Your Name" required>
+      <select id="grade" required>
+        <option value="" disabled selected>Select Grade</option>
+        <option value="1">1 grade</option>
+        <option value="2">2 grade</option>
+        <option value="3">3 grade</option>
+        <option value="4">4 grade</option>
+        <option value="5">5 grade</option>
+        <option value="6">6 grade</option>
+        <option value="7">7 grade</option>
+        <option value="8">8 grade</option>
+        <option value="9">9 grade</option>
+        <option value="10">10 grade</option>
+        <option value="11">11 grade</option>
+        <option value="12">12 grade</option>
+      </select>
+      <button type="submit">Start</button>
+    </form>
+    <div id="quickQuizBar" class="score-bar">
+      <b>Quick Quiz:</b>
+      <button onclick="startQuickQuiz()">Start Quick Quiz</button>
+      <div id="quickQuizResult"></div>
+    </div>
+    <div id="rankedBar" class="score-bar">
+      <b>Math Ranked:</b>
+      <button onclick="startRanked()">Start Ranked</button>
+      <div id="rankedResult"></div>
+    </div>
+    <div id="quizSection" style="display:none;">
+      <div id="question"></div>
+      <input type="text" id="answer" placeholder="Your answer">
+      <button onclick="submitAnswer()">Submit</button>
+      <div id="feedback"></div>
+      <div id="score"></div>
+    </div>
+    <div id="quickQuizSection" style="display:none;">
+      <div id="quickQuestion"></div>
+      <input type="text" id="quickAnswer" placeholder="Your answer">
+      <button onclick="submitQuickAnswer()">Submit</button>
+      <div id="quickFeedback"></div>
+      <div id="quickScore"></div>
+    </div>
+    <div id="rankedSection" style="display:none;">
+      <div id="rankedQuestion"></div>
+      <input type="text" id="rankedAnswer" placeholder="Your answer">
+      <button onclick="submitRankedAnswer()">Submit</button>
+      <div id="rankedFeedback"></div>
+      <div id="rankedScore"></div>
+      <div id="rankedBar" class="score-bar">
+  <b>Math Ranked:</b>
+  <button onclick="startRanked()">Start Ranked</button>
+  <div id="rankedResult"></div>
+</div>
+<div id="masterRankedBar" class="score-bar">
+  <b>Master Ranked:</b>
+  <button id="masterRankedBtn" onclick="tryStartMasterRanked()">
+    Start Master Ranked <span id="masterLock"></span>
+  </button>
+  <div id="masterRankedResult"></div>
+</div>
+<div id="rankedSection" style="display:none;">
+  <div id="rankedQuestion"></div>
+  <input type="text" id="rankedAnswer" placeholder="Your answer">
+  <button onclick="submitRankedAnswer()">Submit</button>
+  <div id="rankedFeedback"></div>
+  <div id="rankedScore"></div>
+</div>
+<div id="masterRankedSection" style="display:none;">
+  <div id="masterRankedQuestion"></div>
+  <div id="masterRankedOptions"></div>
+  <button onclick="submitMasterRankedAnswer()">Submit</button>
+  <div id="masterRankedFeedback"></div>
+  <div id="masterRankedScore"></div>
+</div>
+    </div>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>
